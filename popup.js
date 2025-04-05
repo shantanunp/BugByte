@@ -7,33 +7,35 @@ document.getElementById("reportBug").addEventListener("click", async () => {
         return;
     }
 
-    // Get current tab URL
-    let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const currentUrl = tab?.url || "Unknown URL";
+    const payload = {
+        summary: summary,
+        description: description
+    };
 
     try {
-        const response = await fetch("http://localhost:8000/check-bug", {
+        const response = await fetch("http://localhost:8000/search", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                summary,
-                description,
-                url: currentUrl
-            })
+            body: JSON.stringify(payload)
         });
+
+        if (!response.ok) {
+            throw new Error("API request failed");
+        }
 
         const result = await response.json();
 
-        if (result.match_found) {
-            const { ticket, score } = result;
-            alert(`⚠️ Similar issue found!\n\nTicket: ${ticket.id}\nSummary: ${ticket.summary}\nScore: ${score}\n\nView: ${ticket.url}`);
+        if (result.matches.length > 0) {
+            const links = result.matches.map(m => `• ${m.id}`).join("\n");
+            alert(`Similar issue(s) found:\n${links}`);
         } else {
-            alert("✅ No matching issue found. Safe to report this as a new bug.");
+            alert("No similar issue found. Proceed to create a new one.");
         }
+
     } catch (error) {
-        console.error("Error contacting AI backend:", error);
-        alert("❌ Failed to contact AI backend. Please try again.");
+        console.error("Error contacting backend:", error);
+        alert("Error checking for duplicate issues. Is the backend running?");
     }
 });
