@@ -7,35 +7,42 @@ document.getElementById("reportBug").addEventListener("click", async () => {
         return;
     }
 
-    const payload = {
-        summary: summary,
-        description: description
-    };
+    const responseBox = document.getElementById("responseBox");
+    responseBox.innerHTML = "🔍 Checking for similar bugs...";
 
     try {
-        const response = await fetch("http://localhost:8000/search", {
+        const res = await fetch("http://localhost:8000/search", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ summary, description }),
         });
 
-        if (!response.ok) {
-            throw new Error("API request failed");
+        if (!res.ok) {
+            responseBox.innerHTML = "❌ Failed to connect to backend.";
+            return;
         }
 
-        const result = await response.json();
+        const data = await res.json();
 
-        if (result.matches.length > 0) {
-            const links = result.matches.map(m => `• ${m.id}`).join("\n");
-            alert(`Similar issue(s) found:\n${links}`);
+        if (!data.matches || data.matches.length === 0) {
+            responseBox.innerHTML = "✅ No similar bug found.";
         } else {
-            alert("No similar issue found. Proceed to create a new one.");
+            responseBox.innerHTML = `<strong>⚠️ Possible duplicates:</strong><br><br>`;
+            data.matches.forEach(({ issue, score }) => {
+                const issueHtml = `
+    <div style="margin-bottom: 10px;">
+      <strong>🪲 ID:</strong> ${issue.id || "N/A"}<br>
+      <strong>📌 Summary:</strong> ${issue.summary || "N/A"}<br>
+      <strong>📝 Description:</strong> ${issue.description || "N/A"}<br>
+      <strong>📊 Similarity Score:</strong> ${score !== undefined ? score.toFixed(2) : "N/A"}
+    </div>
+    <hr>
+  `;
+                responseBox.innerHTML += issueHtml;
+            });
         }
-
-    } catch (error) {
-        console.error("Error contacting backend:", error);
-        alert("Error checking for duplicate issues. Is the backend running?");
+    } catch (err) {
+        console.error(err);
+        responseBox.innerHTML = "❌ Error while searching.";
     }
 });
