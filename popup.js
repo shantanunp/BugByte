@@ -18,14 +18,14 @@ document.getElementById("reportBug").addEventListener("click", async () => {
         });
 
         if (!res.ok) {
-            responseBox.innerHTML = "❌ Failed to connect to backend.";
+            responseBox.innerHTML = "Failed to connect to backend.";
             return;
         }
 
         const data = await res.json();
 
         if (!data.matches || data.matches.length === 0) {
-            responseBox.innerHTML = "✅ No similar bugs found.";
+            responseBox.innerHTML = "No similar bugs found.";
         } else {
             responseBox.innerHTML = `<strong>Possible Duplicates Found:</strong><br><br>`;
             data.matches.forEach(({issue, similarity}) => {
@@ -42,6 +42,6 @@ document.getElementById("reportBug").addEventListener("click", async () => {
         }
     } catch (err) {
         console.error(err);
-        responseBox.innerHTML = "❌ Error while searching.";
+        responseBox.innerHTML = "Error while searching.";
     }
 });
