@@ -13,8 +13,8 @@ document.getElementById("reportBug").addEventListener("click", async () => {
     try {
         const res = await fetch("http://localhost:8000/search", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ summary, description }),
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({summary, description}),
         });
 
         if (!res.ok) {
@@ -25,19 +25,18 @@ document.getElementById("reportBug").addEventListener("click", async () => {
         const data = await res.json();
 
         if (!data.matches || data.matches.length === 0) {
-            responseBox.innerHTML = "✅ No similar bug found.";
+            responseBox.innerHTML = "✅ No similar bugs found.";
         } else {
-            responseBox.innerHTML = `<strong>⚠️ Possible duplicates:</strong><br><br>`;
-            data.matches.forEach(({ issue, score }) => {
+            responseBox.innerHTML = `<strong>Possible Duplicates Found:</strong><br><br>`;
+            data.matches.forEach(({issue, similarity}) => {
                 const issueHtml = `
-    <div style="margin-bottom: 10px;">
-      <strong>🪲 ID:</strong> ${issue.id || "N/A"}<br>
-      <strong>📌 Summary:</strong> ${issue.summary || "N/A"}<br>
-      <strong>📝 Description:</strong> ${issue.description || "N/A"}<br>
-      <strong>📊 Similarity Score:</strong> ${score !== undefined ? score.toFixed(2) : "N/A"}
+    <div style="margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+      <p><strong>ID:</strong> ${issue.id || "N/A"}</p>
+      <p><strong>Summary:</strong> ${issue.summary || "N/A"}</p>
+      <p><strong>Description:</strong><br>${issue.description?.trim().replace(/\n/g, "<br>") || "N/A"}</p>
+      <p><strong>Similarity:</strong> ${similarity || "N/A"}</p>
     </div>
-    <hr>
-  `;
+    `;
                 responseBox.innerHTML += issueHtml;
             });
         }
